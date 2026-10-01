@@ -1,0 +1,16 @@
+# Weights that place emphasis on language capabilities
+
+group_weight:
+  code: 0.15
+  math: 0.15
+  reasoning: 0.1
+  knowledge: 0.15
+  commonsense: 0.15
+  reading: 0.15
+  translation: 0.05
+  language: 0.075
+  instruction: 0.025
+
+language_weight:
+  english: 0.5
+  multilingual: 0.5
