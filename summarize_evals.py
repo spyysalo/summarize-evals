@@ -185,8 +185,9 @@ def select_preferred(df):
 
 
 def normalize_scores(df):
-    # Normalize BLEU scores from [0, 100] to [0, 1]
-    df.loc[df['metric'] == 'bleu', 'value'] /= 100.0
+    # Normalize translation metric scores from [0, 100] to [0, 1]
+    for metric in ['bleu', 'bleu_1', 'bleu_4', 'chrf', 'chrf++']:
+        df.loc[df['metric'] == metric, 'value'] /= 100.0
 
     # Normalize squadv2 best_f1 from [0, 100] to [0, 1]
     df.loc[(df['task'] == 'squadv2') & (df['metric'] == 'best_f1'), 'value'] /= 100.0
