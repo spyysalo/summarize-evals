@@ -227,7 +227,7 @@ RANDOM_BASELINE = {
     ('bigbench_qa_wikidata_generate_until', 'exact_match'): 0,
     ('bigbench_repeat_copy_logic_generate_until', 'exact_match'): 0,
     ('coqa', 'f1'): 0,
-    ('flores200', 'bleu'): 0,
+    ('flores200', 'chrf++'): 0,
     ('global_mgsm', 'exact_match'): 0,
     ('global_piqa_prompted', 'exact_match'): 0,
     ('gsm8k', 'exact_match'): 0,
@@ -236,7 +236,7 @@ RANDOM_BASELINE = {
     ('lambada_openai', 'acc'): 0,
     ('mbpp', 'pass_at_1'): 0,
     ('mgsm_native_cot', 'exact_match'): 0,
-    ('opensubtitles_multi40', 'bleu'): 0,
+    ('opensubtitles_multi40', 'chrf'): 0,
     ('polymath', 'exact_match'): 0,
     ('squadv2', 'best_f1'): 0,
     # 2-choice
