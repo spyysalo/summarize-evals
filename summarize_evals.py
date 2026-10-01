@@ -2,6 +2,7 @@
 
 import sys
 import math
+import yaml
 
 import pandas as pd
 
@@ -9,13 +10,17 @@ from collections import defaultdict
 from argparse import ArgumentParser
 
 from tasks import get_task_group, parse_task, PREFERRED_METRIC, RANDOM_BASELINE
-from weights import GROUP_WEIGHT, ENGLISH_WEIGHT, MULTILINGUAL_WEIGHT
 
 
 def parse_args():
     ap = ArgumentParser()
     ap.add_argument('csv')
+    ap.add_argument('--weights', default='weights/uniform.yaml')
     return ap.parse_args()
+
+
+# Globals (sorry), loaded from YAML
+GROUP_WEIGHT, ENGLISH_WEIGHT, MULTILINGUAL_WEIGHT = None, None, None
 
 
 class Node:
@@ -207,8 +212,24 @@ def normalize_scores(df):
     return df
 
 
+def load_weights(args):
+    global GROUP_WEIGHT, ENGLISH_WEIGHT, MULTILINGUAL_WEIGHT
+
+    with open(args.weights) as f:
+        weights = yaml.safe_load(f)
+
+    GROUP_WEIGHT = weights['group_weight']
+    ENGLISH_WEIGHT = weights['language_weight']['english']
+    MULTILINGUAL_WEIGHT = weights['language_weight']['multilingual']
+
+    assert abs(sum(GROUP_WEIGHT.values()) - 1.0) < 1e-9
+    assert ENGLISH_WEIGHT + MULTILINGUAL_WEIGHT == 1.0
+
+
 def main():
     args = parse_args()
+
+    load_weights(args)
 
     df = pd.read_csv(args.csv)
 
