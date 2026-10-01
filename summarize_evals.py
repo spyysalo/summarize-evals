@@ -17,7 +17,8 @@ from tasks import get_task_group, parse_task, PREFERRED_METRIC, RANDOM_BASELINE
 def parse_args():
     ap = ArgumentParser()
     ap.add_argument('csv')
-    ap.add_argument('--weights', default='weights/uniform.yaml')
+    ap.add_argument('-w', '--weights', default='weights/uniform.yaml')
+    ap.add_argument('-v', '--verbose', action='store_true')
     return ap.parse_args()
 
 
@@ -197,32 +198,45 @@ def remove_rows(df, columns, values):
     return df[~mask]
 
 
+def log_difference(msg, start, end):
+    logging.info(f'{msg}: {start} to {end} ({end/start:.1%})')
+
+
 def filter_results(df):
     initial_unique_tasks = set(df["task"].unique())
 
     # Filter out rows not having the preferred metric for the task
+    count = len(df)
     df = df[df['metric'] == df['task'].map(PREFERRED_METRIC)]
+    log_difference('metric filter', count, len(df))
 
     # Filter out rows with non-preferred filter values
+    count = len(df)
     df = remove_rows(df, ('task', 'filter'), {
         ('gsm8k', 'strict-match'),
         ('mgsm_native_cot', 'strict-match'),
     })
+    log_difference('filter filter', count, len(df))
 
     # Filter out rows with non-preferred n_shot values
+    count = len(df)
     df = remove_rows(df, ('task', 'n_shot'), {
         ('arc_challenge', 10),
         ('hellaswag', 0),
         ('piqa', 0),
     })
+    log_difference('n_shot filter', count, len(df))
 
     # Filter out redundant tasks
+    count = len(df)
     df = df[~df["task"].isin({
         'global_piqa_prompted',
     })]
+    log_difference('redundant task filter', count, len(df))
 
     # Filter out English results from translated tasks where the
     # original English task is also included
+    count = len(df)
     df = remove_rows(df, ('task', 'lang'), {
         ('global_mmlu_full', 'eng_Latn'),
         ('global_mgsm', 'eng_Latn'),
@@ -230,9 +244,12 @@ def filter_results(df):
         ('global_piqa_completions', 'eng_Latn'),
         ('xcsqa', 'eng_Latn'),
     })
+    log_difference('en in multilingual filter', count, len(df))
 
     # Filter out any subtask results (got too complicated)
+    count = len(df)
     df = df[df['subtask'].isna()]
+    log_difference('subtask filter', count, len(df))
 
     unique_tasks = set(df["task"].unique())
     task_diff = initial_unique_tasks - unique_tasks
@@ -288,6 +305,9 @@ def load_weights(args):
 
 def main():
     args = parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO)
 
     load_weights(args)
 
