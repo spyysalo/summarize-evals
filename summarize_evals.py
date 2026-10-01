@@ -2,6 +2,8 @@
 
 import sys
 import math
+import logging
+
 import yaml
 
 import pandas as pd
@@ -122,7 +124,7 @@ More than one result for {task_group} {task} {lang}:
 ---------- vs ----------
 {tree[task_group][lang_group][task][lang].data}
 
-(you probably want to edit select_preferred())
+(you probably want to edit filter_results())
 ''')
         node = Node(lang, value=row.norm_value, data=row)
         tree[task_group][lang_group][task][lang] = node
@@ -152,13 +154,52 @@ More than one result for {task_group} {task} {lang}:
     return tree
 
 
+def group_results(df):
+    # Add missing weighted average for polymath
+    weights = { 'low': 1/15, 'medium': 2/15, 'high': 4/15, 'top': 8/15 }
+
+    # Columns that identify a group
+    group_cols = [
+        'checkpoint',
+        'lang',
+        'n_shot',
+        'harness',
+        'backend',
+        'metric',
+        'filter',
+    ]
+
+    # Compute the weighted average per group for the 'polymath' task
+    avg_rows = (
+        df[df['task'] == 'polymath']
+        .assign(weighted=lambda d: d['subtask'].map(weights) * d['value'])
+        .groupby(group_cols, as_index=False)['weighted']
+        .sum()
+        .assign(
+            value=lambda d: d['weighted'],
+            task='polymath',
+            subtask=None,
+            is_group='yes',
+            n_samples=0,    # TODO
+        )
+        .drop(columns='weighted')
+    )
+
+    # Concat without forcing column alignment — missing columns become NaN
+    df = pd.concat([df, avg_rows], ignore_index=True)
+
+    return df
+
+
 def remove_rows(df, columns, values):
     """Remove rows whose values given columns match any item in values."""
     mask = df.set_index(list(columns)).index.isin(values)
     return df[~mask]
 
 
-def select_preferred(df):
+def filter_results(df):
+    initial_unique_tasks = set(df["task"].unique())
+
     # Filter out rows not having the preferred metric for the task
     df = df[df['metric'] == df['task'].map(PREFERRED_METRIC)]
 
@@ -192,6 +233,11 @@ def select_preferred(df):
 
     # Filter out any subtask results (got too complicated)
     df = df[df['subtask'].isna()]
+
+    unique_tasks = set(df["task"].unique())
+    task_diff = initial_unique_tasks - unique_tasks
+    if task_diff:
+        logging.warning(f'removed all results for tasks {task_diff}')
 
     return df
 
@@ -252,8 +298,11 @@ def main():
         df['task'].map(parse_task).apply(pd.Series)
     )
 
-    # Select result for preferred metric, filter, etc. for each task
-    df = select_preferred(df)
+    # Add missing grouped results
+    df = group_results(df)
+
+    # Only keep result for preferred metric, filter, etc. for each task
+    df = filter_results(df)
 
     # Normalize scores to [0,1] w/random baseline
     df = normalize_scores(df)
