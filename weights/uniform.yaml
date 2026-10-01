@@ -1,0 +1,14 @@
+group_weight:
+  code: 0.111111111
+  math: 0.111111111
+  reasoning: 0.111111111
+  translation: 0.111111111
+  knowledge: 0.111111111
+  commonsense: 0.111111111
+  reading: 0.111111111
+  language: 0.111111111
+  instruction: 0.111111111
+
+language_weight:
+  english: 0.5
+  multilingual: 0.5
