@@ -214,9 +214,8 @@ PREFERRED_METRIC = {
 # See also "Random baseline" in
 # https://github.com/mlfoundations/dclm/blob/main/eval/eval_meta_data.csv
 RANDOM_BASELINE = {
-    # Unclear (includes multilabel)
-    ('JEEBench', 'accuracy_avg'): 0,
     # Generation
+    ('AMC23', 'accuracy_avg'): 0,
     ('AIME24', 'accuracy_avg'): 0,
     ('AIME25', 'accuracy_avg'): 0,
     ('HumanEval', 'python_pass@1'): 0,
@@ -263,7 +262,6 @@ RANDOM_BASELINE = {
     ('mmlu', 'acc'): 1/4,
     ('openbookqa', 'acc_norm'): 1/4,
     # 5-choice
-    ('AMC23', 'accuracy_avg'): 1/5,
     ('agieval_lsat_ar', 'acc_norm'): 1/5,    # NB: DCLM-core has 0.25
     ('commonsense_qa', 'acc'): 1/5,
     ('xcsqa', 'acc_norm'): 1/5,
@@ -271,6 +269,8 @@ RANDOM_BASELINE = {
     ('sib200', 'acc'): 1/7,
     # 11-choice (NB: DCLM-core has 0.25)
     ('bigbench_language_identification_multiple_choice', 'acc'): 1/11,
+    # Mixed
+    ('JEEBench', 'accuracy_avg'): 10.55,    # https://aclanthology.org/2023.emnlp-main.468.pdf#page=5 table 2
 }
 assert all((k, v) in RANDOM_BASELINE for k, v in PREFERRED_METRIC.items()), \
     f'missing random baseline for {set(PREFERRED_METRIC.items())-set(RANDOM_BASELINE.keys())}'
