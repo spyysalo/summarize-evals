@@ -203,7 +203,7 @@ def log_difference(msg, start, end):
 
 
 def filter_results(df):
-    initial_unique_tasks = set(df["task"].unique())
+    initial_unique_tasks = set(df['task'].unique())
 
     # Filter out rows not having the preferred metric for the task
     count = len(df)
@@ -227,9 +227,16 @@ def filter_results(df):
     })
     log_difference('n_shot filter', count, len(df))
 
+    # Filter out unsupported languages
+    count = len(df)
+    df = df[~df['lang'].isin({
+        'kat_Geor',
+    })]
+    log_difference('language filter', count, len(df))
+
     # Filter out redundant tasks
     count = len(df)
-    df = df[~df["task"].isin({
+    df = df[~df['task'].isin({
         'global_piqa_prompted',
     })]
     log_difference('redundant task filter', count, len(df))
@@ -251,7 +258,7 @@ def filter_results(df):
     df = df[df['subtask'].isna()]
     log_difference('subtask filter', count, len(df))
 
-    unique_tasks = set(df["task"].unique())
+    unique_tasks = set(df['task'].unique())
     task_diff = initial_unique_tasks - unique_tasks
     if task_diff:
         logging.warning(f'removed all results for tasks {task_diff}')
@@ -272,7 +279,7 @@ def normalize_scores(df):
     task_metric = set(zip(df['task'], df['metric']))
     missing = task_metric - RANDOM_BASELINE.keys()
     if missing:
-        raise ValueError(f"Missing random baseline for {missing}")
+        raise ValueError(f'Missing random baseline for {missing}')
 
     # Normalize wrt random baseline
     baselines = df.apply(
@@ -283,9 +290,9 @@ def normalize_scores(df):
     # Check that all normalized values are in [0, 1]
     out_of_range = df[(df['norm_value'] < 0) | (df['norm_value'] > 1)]
     if len(out_of_range) > 0:
-        print("Values out of [0, 1] range:")
+        print('Values out of [0, 1] range:')
         print(out_of_range[['task', 'metric', 'value', 'norm_value']])
-        raise ValueError(f"{len(out_of_range)} normalized values outside [0, 1]")
+        raise ValueError(f'{len(out_of_range)} normalized values outside [0, 1]')
     return df
 
 
