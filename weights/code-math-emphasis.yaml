@@ -1,0 +1,16 @@
+# Weights that place emphasis on code and math
+
+group_weight:
+  code: 0.2
+  math: 0.2
+  reasoning: 0.1
+  knowledge: 0.125
+  commonsense: 0.125
+  reading: 0.15
+  translation: 0.033333333
+  language: 0.033333333
+  instruction: 0.033333333
+
+language_weight:
+  english: 0.5
+  multilingual: 0.5
