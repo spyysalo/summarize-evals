@@ -178,6 +178,16 @@ def select_preferred(df):
         'global_piqa_prompted',
     })]
 
+    # Filter out English results from translated tasks where the
+    # original English task is also included
+    df = remove_rows(df, ('task', 'lang'), {
+        ('global_mmlu_full', 'eng_Latn'),
+        ('global_mgsm', 'eng_Latn'),
+        ('mgsm_native_cot', 'eng_Latn'),
+        ('global_piqa_completions', 'eng_Latn'),
+        ('xcsqa', 'eng_Latn'),
+    })
+
     # Filter out any subtask results (got too complicated)
     df = df[df['subtask'].isna()]
 
