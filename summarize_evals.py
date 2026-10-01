@@ -17,6 +17,7 @@ from tasks import get_task_group, parse_task, PREFERRED_METRIC, RANDOM_BASELINE
 def parse_args():
     ap = ArgumentParser()
     ap.add_argument('csv')
+    ap.add_argument('-d', '--depth', type=int, default=None)
     ap.add_argument('-w', '--weights', default='weights/uniform.yaml')
     ap.add_argument('-v', '--verbose', action='store_true')
     return ap.parse_args()
@@ -78,7 +79,7 @@ class Node:
         self.value = sum(c.weight * c.propagate() for c in self.children.values())
         return self.value
 
-    def __repr__(self, prefix='', is_last=True, is_root=True):
+    def __repr__(self, prefix='', is_last=True, is_root=True, depth=None):
         if is_root:
             connector = ''
         else:
@@ -94,13 +95,18 @@ class Node:
 
         lines = [line]
 
+        if depth is not None:
+            if depth <= 0:
+                return '\n'.join(lines)
+            depth -= 1
+
         children = list(self.children.values())
         for i, child in enumerate(children):
             if is_root:
                 child_prefix = prefix
             else:
                 child_prefix = prefix + ('    ' if is_last else '│   ')
-            lines.append(child.__repr__(child_prefix, i == len(children) - 1, False))
+            lines.append(child.__repr__(child_prefix, i == len(children) - 1, False, depth))
 
         return '\n'.join(lines)
 
@@ -340,7 +346,7 @@ def main():
     # Build and display trees
     for checkpoint, group in results.items():
         tree = build_tree(checkpoint, group)
-        print(tree)
+        print(tree.__repr__(depth=args.depth))
 
 
 if __name__ == '__main__':
