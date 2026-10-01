@@ -170,7 +170,9 @@ def select_preferred(df):
 
     # Filter out rows with non-preferred n_shot values
     df = remove_rows(df, ('task', 'n_shot'), {
+        ('arc_challenge', 10),
         ('hellaswag', 0),
+        ('piqa', 0),
     })
 
     # Filter out redundant tasks
