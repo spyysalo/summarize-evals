@@ -270,7 +270,7 @@ RANDOM_BASELINE = {
     # 11-choice (NB: DCLM-core has 0.25)
     ('bigbench_language_identification_multiple_choice', 'acc'): 1/11,
     # Mixed
-    ('JEEBench', 'accuracy_avg'): 10.55,    # https://aclanthology.org/2023.emnlp-main.468.pdf#page=5 table 2
+    ('JEEBench', 'accuracy_avg'): 0.1055,    # https://aclanthology.org/2023.emnlp-main.468.pdf#page=5 table 2
 }
 assert all((k, v) in RANDOM_BASELINE for k, v in PREFERRED_METRIC.items()), \
     f'missing random baseline for {set(PREFERRED_METRIC.items())-set(RANDOM_BASELINE.keys())}'
