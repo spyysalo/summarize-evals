@@ -203,7 +203,7 @@ PREFERRED_METRIC = {
     'polymath': 'exact_match',
     'sib200': 'acc',
     'social_iqa': 'acc',
-    'squadv2': 'best_f1',
+    'squadv2': 'f1',
     'winogrande': 'acc',
     'wsc273': 'acc',
     'xcopa': 'acc',
@@ -238,7 +238,7 @@ RANDOM_BASELINE = {
     ('mgsm_native_cot', 'exact_match'): 0,
     ('opensubtitles_multi40', 'chrf'): 0,
     ('polymath', 'exact_match'): 0,
-    ('squadv2', 'best_f1'): 0,
+    ('squadv2', 'f1'): 0,
     # 2-choice
     ('boolq', 'acc'): 1/2,    # NB: DCLM-core has 0.62
     ('copa', 'acc'): 1/2,
