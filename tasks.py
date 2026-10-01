@@ -182,7 +182,7 @@ PREFERRED_METRIC = {
     'commonsense_qa': 'acc',
     'copa': 'acc',
     'coqa': 'f1',
-    'flores200': 'bleu',    # NB: original paper uses chrf++
+    'flores200': 'chrf++',
     'global_mgsm': 'exact_match',
     'global_mmlu_full': 'acc',
     'global_piqa_completions': 'acc_norm',
@@ -198,7 +198,7 @@ PREFERRED_METRIC = {
     'mmlu': 'acc',
     'multiblimp': 'acc_norm',
     'openbookqa': 'acc_norm',
-    'opensubtitles_multi40': 'bleu',
+    'opensubtitles_multi40': 'chrf',
     'piqa': 'acc_norm',
     'polymath': 'exact_match',
     'sib200': 'acc',
