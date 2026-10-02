@@ -237,6 +237,8 @@ def filter_results(df):
     count = len(df)
     df = df[~df['lang'].isin({
         'kat_Geor',
+        'kat_Geor-eng_Latn',
+        'eng_Latn-kat_Geor'
     })]
     log_difference('language filter', count, len(df))
 
