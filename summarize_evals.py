@@ -20,6 +20,7 @@ def parse_args():
     ap.add_argument('-d', '--depth', type=int, default=None)
     ap.add_argument('-w', '--weights', default='weights/uniform.yaml')
     ap.add_argument('-v', '--verbose', action='store_true')
+    ap.add_argument('-f', '--flat', action='store_true')
     return ap.parse_args()
 
 
@@ -295,6 +296,9 @@ def normalize_scores(df):
     )
     df['norm_value'] = (df['value'] - baselines) / (1.0 - baselines)
 
+    # Clip to 0
+    df["norm_value"] = df["norm_value"].clip(lower=0)
+
     # Check that all normalized values are in [0, 1]
     out_of_range = df[(df['norm_value'] < 0) | (df['norm_value'] > 1)]
     if len(out_of_range) > 0:
@@ -316,6 +320,17 @@ def load_weights(args):
 
     assert abs(sum(GROUP_WEIGHT.values()) - 1.0) < 1e-9
     assert ENGLISH_WEIGHT + MULTILINGUAL_WEIGHT == 1.0
+
+
+def print_flat(node, parents=None):
+    if parents is None:
+        parents = []
+    children = list(node.children.values())
+    if not children:
+        print(f'{"\t".join(parents)}\t{node.name}\t{node.value}')
+    else:
+        for c in children:
+            print_flat(c, parents + [node.name])
 
 
 def main():
@@ -348,7 +363,11 @@ def main():
     # Build and display trees
     for checkpoint, group in results.items():
         tree = build_tree(checkpoint, group)
-        print(tree.__repr__(depth=args.depth))
+
+        if not args.flat:
+            print(tree.__repr__(depth=args.depth))
+        else:
+            print_flat(tree)
 
 
 if __name__ == '__main__':
