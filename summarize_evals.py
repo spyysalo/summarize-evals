@@ -229,7 +229,7 @@ def filter_results(df):
     count = len(df)
     df = remove_rows(df, ('task', 'n_shot'), {
         ('arc_challenge', 10),
-        ('hellaswag', 0),
+        ('hellaswag', 10),
         ('piqa', 0),
     })
     log_difference('n_shot filter', count, len(df))
@@ -327,7 +327,7 @@ def print_flat(node, parents=None):
         parents = []
     children = list(node.children.values())
     if not children:
-        print(f'{"\t".join(parents)}\t{node.name}\t{node.value}')
+        print(f'{"\t".join(parents)}\t{node.name}\t{node.value:.3f}')
     else:
         for c in children:
             print_flat(c, parents + [node.name])
