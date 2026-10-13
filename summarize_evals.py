@@ -20,14 +20,9 @@ def parse_args():
     ap = ArgumentParser()
     ap.add_argument('csv')
     ap.add_argument('-d', '--depth', type=int, default=None)
-    ap.add_argument('-w', '--weights', default='weights/uniform.yaml')
     ap.add_argument('-v', '--verbose', action='store_true')
     ap.add_argument('-f', '--flat', action='store_true')
     return ap.parse_args()
-
-
-# Globals (sorry), loaded from YAML
-GROUP_WEIGHT, ENGLISH_WEIGHT, MULTILINGUAL_WEIGHT = None, None, None
 
 
 class Node:
@@ -122,6 +117,12 @@ def load_task_set(path='configs/sets/comprehensive.yaml'):
     return data
 
 
+def load_weights(path='configs/weights/code-math.yaml'):
+    path = Path(path)
+    data = yaml.safe_load(path.read_text())
+    return data
+
+
 def load_evals(path='configs/evals'):
     path = Path(path)
     evals = {}
@@ -174,45 +175,46 @@ def redistribute_child_weights(node):
             c.weight /= total
 
 
-def assign_lang_subtree_weights(parent, lang):
+def assign_lang_subtree_weights(parent, lang, weights):
     subtree = parent[lang]
     subtree.weight = 1/len(parent)
     if subtree.children:    # subtasks
         redistribute_child_weights(subtree)
 
 
-def assign_task_subtree_weights(parent, task):
+def assign_task_subtree_weights(parent, task, weights):
     subtree = parent[task]
     subtree.weight = 1/len(parent)
     for lang in subtree:
-        assign_lang_subtree_weights(subtree, lang)
+        assign_lang_subtree_weights(subtree, lang, weights)
 
 
-def assign_lang_group_subtree_weights(parent, lang_group):
+def assign_lang_group_subtree_weights(parent, lang_group, weights):
     subtree = parent[lang_group]
+    eng_weight = weights['english_weights'][parent.name]
     subtree.weight = (
-        ENGLISH_WEIGHT if lang_group == 'english'
-        else MULTILINGUAL_WEIGHT
+        eng_weight if lang_group == 'english'
+        else 1-eng_weight
     )
     for task in subtree:
-        assign_task_subtree_weights(subtree, task)
+        assign_task_subtree_weights(subtree, task, weights)
 
 
-def assign_task_group_subtree_weights(parent, task_group):
+def assign_task_group_subtree_weights(parent, task_group, weights):
     subtree = parent[task_group]
-    subtree.weight = GROUP_WEIGHT[task_group]
+    subtree.weight = weights['weights'][task_group]
     for lang_group in subtree:
-        assign_lang_group_subtree_weights(subtree, lang_group)
+        assign_lang_group_subtree_weights(subtree, lang_group, weights)
     redistribute_child_weights(subtree)
 
 
-def assign_tree_weights(tree):
+def assign_tree_weights(tree, weights):
     tree.weight = 1.0
     for task_group in tree:
-        assign_task_group_subtree_weights(tree, task_group)
+        assign_task_group_subtree_weights(tree, task_group, weights)
 
 
-def build_tree(checkpoint, results, evals):
+def build_tree(checkpoint, results, evals, weights):
     tree = Node(checkpoint)
 
     # Build dict-of-dicts-like tree organized by task group (e.g. "math"),
@@ -224,7 +226,7 @@ def build_tree(checkpoint, results, evals):
             lang_group = 'english'
         else:
             lang_group = 'multilingual'
-        task_group = evals[task]['category'].lower()
+        task_group = evals[task]['category']
 
         if not 'aggregation' in evals[task]:
             # No subtask structure
@@ -244,7 +246,7 @@ def build_tree(checkpoint, results, evals):
             keys = [task_group, lang_group, task, lang, subtask['name']]
         add_unique_leaf(tree, keys, node)
 
-    assign_tree_weights(tree)
+    assign_tree_weights(tree, weights)
     tree.propagate_values()
 
     return tree
@@ -252,20 +254,6 @@ def build_tree(checkpoint, results, evals):
 
 def log_difference(msg, start, end):
     logging.info(f'{msg}: {start} to {end} ({end/start:.1%})')
-
-
-def load_weights(args):
-    global GROUP_WEIGHT, ENGLISH_WEIGHT, MULTILINGUAL_WEIGHT
-
-    with open(args.weights) as f:
-        weights = yaml.safe_load(f)
-
-    GROUP_WEIGHT = weights['group_weight']
-    ENGLISH_WEIGHT = weights['language_weight']['english']
-    MULTILINGUAL_WEIGHT = weights['language_weight']['multilingual']
-
-    assert abs(sum(GROUP_WEIGHT.values()) - 1.0) < 1e-9
-    assert ENGLISH_WEIGHT + MULTILINGUAL_WEIGHT == 1.0
 
 
 def print_flat(node, parents=None, depth=None):
@@ -495,7 +483,7 @@ def main():
 
     task_set = load_task_set()
     evals = load_evals()
-    load_weights(args)
+    weights = load_weights()
 
     df = pd.read_csv(args.csv, keep_default_na=False)
 
@@ -506,7 +494,7 @@ def main():
         r.norm_value = normalize_value(r.value, r.task)
 
     for checkpoint, group in groupby(results, key=lambda r: r.checkpoint):
-        tree = build_tree(checkpoint, group, evals)
+        tree = build_tree(checkpoint, group, evals, weights)
 
         if not args.flat:
             print(tree.__repr__(depth=args.depth))
